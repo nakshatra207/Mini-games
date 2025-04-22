@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Space Invaders</title>
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    canvas {
+      background: #000;
+      border: 3px solid lime;
+    }
+  </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="480" height="320"></canvas>
+
+<script>
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+
+  // Player
+  const player = {
+    x: canvas.width / 2 - 15,
+    y: canvas.height - 30,
+    width: 30,
+    height: 10,
+    speed: 5
+  };
+
+  // Bullets
+  const bullets = [];
+
+  // Enemies
+  const enemies = [];
+  const rows = 3;
+  const cols = 6;
+  const enemyWidth = 30;
+  const enemyHeight = 15;
+  let enemyDirection = 1;
+
+  // Score
+  let score = 0;
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      enemies.push({
+        x: 50 + c * 60,
+        y: 30 + r * 30,
+        width: enemyWidth,
+        height: enemyHeight,
+        alive: true
+      });
+    }
+  }
+
+  // Controls
+  let leftPressed = false;
+  let rightPressed = false;
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft") leftPressed = true;
+    if (e.key === "ArrowRight") rightPressed = true;
+    if (e.key === " " || e.key === "Spacebar") {
+      bullets.push({ x: player.x + player.width / 2, y: player.y, speed: 5 });
+    }
+  });
+  document.addEventListener("keyup", (e) => {
+    if (e.key === "ArrowLeft") leftPressed = false;
+    if (e.key === "ArrowRight") rightPressed = false;
+  });
+
+  function drawPlayer() {
+    ctx.fillStyle = "lime";
+    ctx.fillRect(player.x, player.y, player.width, player.height);
+  }
+
+  function drawBullets() {
+    ctx.fillStyle = "red";
+    for (let b of bullets) {
+      ctx.fillRect(b.x, b.y, 2, 10);
+    }
+  }
+
+  function drawEnemies() {
+    ctx.fillStyle = "white";
+    for (let e of enemies) {
+      if (e.alive) {
+        ctx.fillRect(e.x, e.y, e.width, e.height);
+      }
+    }
+  }
+
+  function drawScore() {
+    ctx.fillStyle = "white";
+    ctx.font = "16px Arial";
+    ctx.fillText("Score: " + score, 10, 20);
+  }
+
+  function update() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Move player
+    if (leftPressed && player.x > 0) player.x -= player.speed;
+    if (rightPressed && player.x < canvas.width - player.width) player.x += player.speed;
+
+    // Move bullets
+    for (let b of bullets) b.y -= b.speed;
+
+    // Remove off-screen bullets
+    for (let i = bullets.length - 1; i >= 0; i--) {
+      if (bullets[i].y < 0) bullets.splice(i, 1);
+    }
+
+    // Move enemies
+    let shiftDown = false;
+    for (let e of enemies) {
+      if (!e.alive) continue;
+      e.x += enemyDirection;
+      if (e.x + e.width > canvas.width || e.x < 0) shiftDown = true;
+    }
+
+    if (shiftDown) {
+      enemyDirection *= -1;
+      for (let e of enemies) {
+        e.y += 10;
+      }
+    }
+
+    // Bullet-enemy collision
+    for (let b of bullets) {
+      for (let e of enemies) {
+        if (
+          e.alive &&
+          b.x > e.x &&
+          b.x < e.x + e.width &&
+          b.y > e.y &&
+          b.y < e.y + e.height
+        ) {
+          e.alive = false;
+          b.y = -10; // Remove bullet
+          score += 10;
+        }
+      }
+    }
+
+    drawPlayer();
+    drawBullets();
+    drawEnemies();
+    drawScore();
+
+    // Win condition
+    if (enemies.every(e => !e.alive)) {
+      alert("🎉 You Won!");
+      document.location.reload();
+    }
+
+    requestAnimationFrame(update);
+  }
+
+  update();
+</script>
+</body>
+</html>
+

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pong Game</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+    canvas {
+      background: #111;
+      border: 3px solid #00ffd0;
+    }
+  </style>
+</head>
+<body>
+<canvas id="pong" width="700" height="400"></canvas>
+<script>
+  const canvas = document.getElementById("pong");
+  const ctx = canvas.getContext("2d");
+
+  const paddleWidth = 10, paddleHeight = 100;
+
+  const user = {
+    x: 0,
+    y: canvas.height/2 - paddleHeight/2,
+    width: paddleWidth,
+    height: paddleHeight,
+    color: "white",
+    score: 0
+  };
+
+  const computer = {
+    x: canvas.width - paddleWidth,
+    y: canvas.height/2 - paddleHeight/2,
+    width: paddleWidth,
+    height: paddleHeight,
+    color: "white",
+    score: 0
+  };
+
+  const ball = {
+    x: canvas.width/2,
+    y: canvas.height/2,
+    radius: 10,
+    speed: 5,
+    velocityX: 5,
+    velocityY: 5,
+    color: "white"
+  };
+
+  function drawRect(x, y, w, h, color){
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w, h);
+  }
+
+  function drawCircle(x, y, r, color){
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI*2, false);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  function drawText(text, x, y, color){
+    ctx.fillStyle = color;
+    ctx.font = "32px Arial";
+    ctx.fillText(text, x, y);
+  }
+
+  function render(){
+    drawRect(0, 0, canvas.width, canvas.height, "#000");
+    drawText(user.score, canvas.width/4, 50, "white");
+    drawText(computer.score, 3*canvas.width/4, 50, "white");
+    drawRect(user.x, user.y, user.width, user.height, user.color);
+    drawRect(computer.x, computer.y, computer.width, computer.height, computer.color);
+    drawCircle(ball.x, ball.y, ball.radius, ball.color);
+  }
+
+  function game(){
+    update();
+    render();
+  }
+
+  function collision(b, p){
+    p.top = p.y;
+    p.bottom = p.y + p.height;
+    p.left = p.x;
+    p.right = p.x + p.width;
+
+    b.top = b.y - b.radius;
+    b.bottom = b.y + b.radius;
+    b.left = b.x - b.radius;
+    b.right = b.x + b.radius;
+
+    return p.left < b.right && p.right > b.left && p.top < b.bottom && p.bottom > b.top;
+  }
+
+  function resetBall(){
+    ball.x = canvas.width/2;
+    ball.y = canvas.height/2;
+    ball.velocityX = -ball.velocityX;
+    ball.speed = 5;
+  }
+
+  function update(){
+    ball.x += ball.velocityX;
+    ball.y += ball.velocityY;
+
+    // simple AI
+    computer.y += ((ball.y - (computer.y + computer.height/2))) * 0.1;
+
+    if(ball.y + ball.radius > canvas.height || ball.y - ball.radius < 0){
+      ball.velocityY = -ball.velocityY;
+    }
+
+    let player = (ball.x < canvas.width/2) ? user : computer;
+
+    if(collision(ball, player)){
+      let collidePoint = ball.y - (player.y + player.height/2);
+      collidePoint = collidePoint / (player.height/2);
+      let angleRad = collidePoint * Math.PI/4;
+
+      let direction = (ball.x < canvas.width/2) ? 1 : -1;
+      ball.velocityX = direction * ball.speed * Math.cos(angleRad);
+      ball.velocityY = ball.speed * Math.sin(angleRad);
+      ball.speed += 0.5;
+    }
+
+    if(ball.x - ball.radius < 0){
+      computer.score++;
+      resetBall();
+    } else if(ball.x + ball.radius > canvas.width){
+      user.score++;
+      resetBall();
+    }
+  }
+
+  canvas.addEventListener("mousemove", evt => {
+    let rect = canvas.getBoundingClientRect();
+    user.y = evt.clientY - rect.top - user.height/2;
+  });
+
+  const framePerSecond = 60;
+  setInterval(game, 1000/framePerSecond);
+</script>
+</body>
+</html>
+

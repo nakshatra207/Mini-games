@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Flappy Bird</title>
+  <style>
+    body {
+      margin: 0;
+      background: #87CEEB;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    canvas {
+      background: #70c5ce;
+      border: 4px solid #000;
+    }
+  </style>
+</head>
+<body>
+<canvas id="gameCanvas" width="320" height="480"></canvas>
+<script>
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+
+  let bird = { x: 50, y: 150, w: 20, h: 20, gravity: 0.6, lift: -10, velocity: 0 };
+  let pipes = [];
+  let frame = 0;
+  let score = 0;
+  let gameOver = false;
+
+  function drawBird() {
+    ctx.fillStyle = "yellow";
+    ctx.fillRect(bird.x, bird.y, bird.w, bird.h);
+  }
+
+  function drawPipe(pipe) {
+    ctx.fillStyle = "green";
+    ctx.fillRect(pipe.x, 0, pipe.w, pipe.top);
+    ctx.fillRect(pipe.x, pipe.bottom, pipe.w, canvas.height - pipe.bottom);
+  }
+
+  function update() {
+    if (gameOver) return;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Bird physics
+    bird.velocity += bird.gravity;
+    bird.y += bird.velocity;
+
+    if (bird.y + bird.h > canvas.height || bird.y < 0) {
+      gameOver = true;
+      alert("💀 Game Over!");
+      document.location.reload();
+    }
+
+    // Create pipes
+    if (frame % 90 === 0) {
+      let gap = 100;
+      let top = Math.random() * (canvas.height - gap - 50);
+      pipes.push({
+        x: canvas.width,
+        top: top,
+        bottom: top + gap,
+        w: 40
+      });
+    }
+
+    // Move & draw pipes
+    for (let i = pipes.length - 1; i >= 0; i--) {
+      pipes[i].x -= 2;
+      drawPipe(pipes[i]);
+
+      // Collision detection
+      if (
+        bird.x < pipes[i].x + pipes[i].w &&
+        bird.x + bird.w > pipes[i].x &&
+        (bird.y < pipes[i].top || bird.y + bird.h > pipes[i].bottom)
+      ) {
+        gameOver = true;
+        alert("💀 Game Over!");
+        document.location.reload();
+      }
+
+      // Remove off-screen pipes
+      if (pipes[i].x + pipes[i].w < 0) {
+        pipes.splice(i, 1);
+        score++;
+      }
+    }
+
+    drawBird();
+
+    // Draw score
+    ctx.fillStyle = "#fff";
+    ctx.font = "20px Arial";
+    ctx.fillText("Score: " + score, 10, 30);
+
+    frame++;
+    requestAnimationFrame(update);
+  }
+
+  document.addEventListener("keydown", () => {
+    bird.velocity = bird.lift;
+  });
+
+  update();
+</script>
+</body>
+</html>
+

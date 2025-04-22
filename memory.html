@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Memory Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    #game-board {
+      display: grid;
+      grid-template-columns: repeat(4, 100px);
+      grid-gap: 10px;
+    }
+    .card {
+      width: 100px;
+      height: 100px;
+      background-color: #4caf50;
+      color: #fff;
+      font-size: 2em;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      border-radius: 5px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .flipped {
+      background-color: #fff;
+      color: #000;
+    }
+    .matched {
+      background-color: #4caf50;
+      color: #fff;
+    }
+    .card.hidden {
+      visibility: hidden;
+    }
+    #status {
+      margin-top: 20px;
+      font-size: 1.2em;
+      font-weight: bold;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px;
+      font-size: 1.2em;
+      cursor: pointer;
+      background-color: #4caf50;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    button:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+
+<div id="game-board"></div>
+<div id="status"></div>
+<button onclick="startNewGame()">Start New Game</button>
+
+<script>
+  let cards = [];
+  let flippedCards = [];
+  let matchedCards = [];
+  let moves = 0;
+
+  // Create the game board
+  function createBoard() {
+    cards = [];
+    for (let i = 1; i <= 8; i++) {
+      cards.push(i, i);  // Add pairs
+    }
+    shuffle(cards);
+
+    const gameBoard = document.getElementById("game-board");
+    gameBoard.innerHTML = "";
+    for (let i = 0; i < cards.length; i++) {
+      const cardDiv = document.createElement("div");
+      cardDiv.classList.add("card");
+      cardDiv.dataset.cardValue = cards[i];
+      cardDiv.addEventListener("click", () => flipCard(cardDiv));
+      gameBoard.appendChild(cardDiv);
+    }
+  }
+
+  // Shuffle the cards array
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+  }
+
+  // Flip a card
+  function flipCard(cardDiv) {
+    if (flippedCards.length === 2 || matchedCards.includes(cardDiv)) return;
+
+    cardDiv.classList.add("flipped");
+    cardDiv.textContent = cardDiv.dataset.cardValue;
+    flippedCards.push(cardDiv);
+
+    if (flippedCards.length === 2) {
+      moves++;
+      checkMatch();
+    }
+  }
+
+  // Check if the two flipped cards match
+  function checkMatch() {
+    const [card1, card2] = flippedCards;
+
+    if (card1.dataset.cardValue === card2.dataset.cardValue) {
+      card1.classList.add("matched");
+      card2.classList.add("matched");
+      matchedCards.push(card1, card2);
+      flippedCards = [];
+
+      if (matchedCards.length === cards.length) {
+        document.getElementById("status").textContent = `You won in ${moves} moves!`;
+      }
+    } else {
+      setTimeout(() => {
+        card1.classList.remove("flipped");
+        card2.classList.remove("flipped");
+        card1.textContent = "";
+        card2.textContent = "";
+        flippedCards = [];
+      }, 1000);
+    }
+  }
+
+  // Start a new game
+  function startNewGame() {
+    flippedCards = [];
+    matchedCards = [];
+    moves = 0;
+    document.getElementById("status").textContent = "";
+    createBoard();
+  }
+
+  // Initialize the game
+  startNewGame();
+</script>
+
+</body>
+</html>
+

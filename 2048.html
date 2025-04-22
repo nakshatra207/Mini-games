@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2048 Game</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      background: #faf8ef;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(4, 100px);
+      grid-gap: 10px;
+      background: #bbada0;
+      padding: 10px;
+      border-radius: 10px;
+    }
+    .tile {
+      width: 100px;
+      height: 100px;
+      background: #cdc1b4;
+      border-radius: 5px;
+      font-size: 35px;
+      font-weight: bold;
+      color: #776e65;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.3s;
+    }
+    .tile-2 { background: #eee4da; color: #776e65; }
+    .tile-4 { background: #ede0c8; color: #776e65; }
+    .tile-8 { background: #f2b179; color: white; }
+    .tile-16 { background: #f59563; color: white; }
+    .tile-32 { background: #f67c5f; color: white; }
+    .tile-64 { background: #f65e3b; color: white; }
+    .tile-128 { background: #edcf72; color: white; }
+    .tile-256 { background: #edcc61; color: white; }
+    .tile-512 { background: #edc850; color: white; }
+    .tile-1024 { background: #edc53f; color: white; }
+    .tile-2048 { background: #edc22e; color: white; }
+    .tile-empty { background: #bbada0; }
+  </style>
+</head>
+<body>
+  <div id="board"></div>
+  <script>
+    const board = document.getElementById("board");
+    let grid = [];
+    let score = 0;
+
+    // Initialize the board
+    function initBoard() {
+      grid = [
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+        [0, 0, 0, 0],
+      ];
+      score = 0;
+      addRandomTile();
+      addRandomTile();
+      renderBoard();
+    }
+
+    // Add a random tile (2 or 4) to an empty spot
+    function addRandomTile() {
+      let emptyCells = [];
+      for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 4; col++) {
+          if (grid[row][col] === 0) {
+            emptyCells.push({ row, col });
+          }
+        }
+      }
+      if (emptyCells.length === 0) return;
+      const { row, col } = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      grid[row][col] = Math.random() < 0.9 ? 2 : 4;
+    }
+
+    // Render the board
+    function renderBoard() {
+      board.innerHTML = "";
+      for (let row = 0; row < 4; row++) {
+        for (let col = 0; col < 4; col++) {
+          const tileValue = grid[row][col];
+          const tile = document.createElement("div");
+          tile.classList.add("tile");
+          if (tileValue) {
+            tile.classList.add(`tile-${tileValue}`);
+            tile.textContent = tileValue;
+          } else {
+            tile.classList.add("tile-empty");
+          }
+          board.appendChild(tile);
+        }
+      }
+    }
+
+    // Move tiles
+    function slideLeft() {
+      for (let row = 0; row < 4; row++) {
+        let newRow = grid[row].filter(val => val !== 0);
+        for (let i = 0; i < newRow.length - 1; i++) {
+          if (newRow[i] === newRow[i + 1]) {
+            newRow[i] *= 2;
+            newRow.splice(i + 1, 1);
+            score += newRow[i];
+          }
+        }
+        while (newRow.length < 4) {
+          newRow.push(0);
+        }
+        grid[row] = newRow;
+      }
+    }
+
+    // Rotate grid
+    function rotateGrid() {
+      grid = grid[0].map((_, index) => grid.map(row => row[index]));
+    }
+
+    // Move tiles based on direction
+    function move(direction) {
+      if (direction === "left") {
+        slideLeft();
+      } else if (direction === "right") {
+        grid = grid.map(row => row.reverse());
+        slideLeft();
+        grid = grid.map(row => row.reverse());
+      } else if (direction === "up") {
+        rotateGrid();
+        slideLeft();
+        rotateGrid();
+        rotateGrid();
+        rotateGrid();
+      } else if (direction === "down") {
+        rotateGrid();
+        rotateGrid();
+        rotateGrid();
+        slideLeft();
+        rotateGrid();
+      }
+      addRandomTile();
+      renderBoard();
+    }
+
+    // Handle key presses
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") {
+        move("left");
+      } else if (e.key === "ArrowRight") {
+        move("right");
+      } else if (e.key === "ArrowUp") {
+        move("up");
+      } else if (e.key === "ArrowDown") {
+        move("down");
+      }
+    });
+
+    // Start the game
+    initBoard();
+  </script>
+</body>
+</html>
+
